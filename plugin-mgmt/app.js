@@ -792,7 +792,19 @@ document.addEventListener('click', function(e) {
 document.addEventListener('click', function(e) {
   var btn = e.target.closest('.btn-open-folder');
   if (!btn || btn.disabled) return;
-  alert('打开文件夹: ' + btn.dataset.name + ' (原型演示)');
+  var name = btn.dataset.name;
+
+  // 模拟运行时文件夹存在性检查
+  // 对"我获取的"已下载的插件，模拟文件夹已丢失
+  var acquired = myAcquiredPlugins.find(function(p) { return p.name === name; });
+  if (acquired && acquired.status !== 'not-downloaded') {
+    acquired.status = 'not-downloaded';
+    renderMyAcquired();
+    alert('本地文件已丢失，已降级为「未下载」状态，请重新下载。\n（原型演示 — 实际运行中每次操作前做此检查）');
+    return;
+  }
+
+  alert('打开文件夹: ' + name);
 });
 
 // =============================================================
