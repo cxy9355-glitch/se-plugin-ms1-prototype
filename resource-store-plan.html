@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>资源商店全链路规划</title>
+<style>
+  :root {
+    --se: #3b82f6;    --se-bg: rgba(59,130,246,.13);
+    --fs: #10b981;    --fs-bg: rgba(16,185,129,.13);
+    --y:  #f97316;    --y-bg:  rgba(249,115,22,.13);
+    --x:  #8b5cf6;    --x-bg:  rgba(139,92,246,.13);
+    --p:  #f59e0b;    --p-bg:  rgba(245,158,11,.13);
+    --m0: #6b7280;    --m0-bg: rgba(107,114,128,.13);
+    --bg: #0f172a;    --card: #1e293b;    --border: #334155;
+    --text: #e2e8f0;  --muted: #94a3b8;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans SC",sans-serif;
+    background:var(--bg); color:var(--text); line-height:1.6;
+    padding:0 24px 80px;
+  }
+  .container { max-width:1100px; margin:0 auto; }
+
+  header { padding:48px 0 32px; border-bottom:1px solid var(--border); margin-bottom:40px; }
+  header h1 { font-size:32px; font-weight:700; margin-bottom:8px; }
+  header p { color:var(--muted); font-size:16px; }
+  .meta { display:flex; gap:24px; margin-top:16px; font-size:14px; color:var(--muted); flex-wrap:wrap; }
+
+  section { margin-bottom:48px; }
+  .section-title { font-size:20px; font-weight:600; margin-bottom:20px; display:flex; align-items:center; gap:10px; }
+
+  /* Overview */
+  .grid4 { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:48px; }
+  .grid5 { display:grid; grid-template-columns:repeat(5,1fr); gap:16px; margin-bottom:48px; }
+  .ov-card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:20px; border-top:3px solid transparent; }
+  .ov-card.se { border-top-color:var(--se); }
+  .ov-card.fs { border-top-color:var(--fs); }
+  .ov-card.y  { border-top-color:var(--y); }
+  .ov-card.x  { border-top-color:var(--x); }
+  .ov-card.p  { border-top-color:var(--p); }
+  .ov-card h3 { font-size:14px; margin-bottom:4px; }
+  .ov-card .tag {
+    display:inline-block; font-size:10px; padding:2px 8px; border-radius:6px; font-weight:600;
+    margin-bottom:8px; letter-spacing:.3px;
+  }
+  .tag.se { background:var(--se-bg); color:#93c5fd; }
+  .tag.fs { background:var(--fs-bg); color:#6ee7b7; }
+  .tag.y  { background:var(--y-bg);  color:#fdba74; }
+  .tag.x  { background:var(--x-bg);  color:#c4b5fd; }
+  .tag.p  { background:var(--p-bg);  color:#fcd34d; }
+  .ov-card p { font-size:12px; color:var(--muted); line-height:1.6; }
+  .ov-card .stat { font-size:11px; margin-top:8px; padding-top:8px; border-top:1px solid var(--border); color:var(--muted); }
+
+  /* Swim Lane */
+  .lane-box { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:24px 20px; }
+  .lane-row {
+    display:flex; align-items:center; min-height:44px;
+    border-bottom:1px solid rgba(255,255,255,.04); gap:0;
+  }
+  .lane-row:last-child { border-bottom:none; }
+  .lane-label {
+    width:100px; flex-shrink:0; font-size:13px; font-weight:600;
+    display:flex; align-items:center; gap:6px;
+  }
+  .lane-label .dot { width:10px; height:10px; border-radius:50%; display:inline-block; flex-shrink:0; }
+  .lane-c { flex:1; display:flex; gap:4px; }
+  .lane-bar {
+    height:28px; border-radius:5px; display:flex; align-items:center;
+    font-size:11px; padding:0 10px; white-space:nowrap; overflow:hidden;
+  }
+  .bar-m0 { background:var(--m0-bg); border-left:3px solid var(--m0); }
+  .bar-se { background:var(--se-bg); border-left:3px solid var(--se); }
+  .bar-fs { background:var(--fs-bg); border-left:3px solid var(--fs); }
+  .bar-y  { background:var(--y-bg);  border-left:3px solid var(--y); }
+  .bar-x  { background:var(--x-bg);  border-left:3px solid var(--x); }
+  .bar-p  { background:var(--p-bg);  border-left:3px solid var(--p); }
+
+  /* phases */
+  .phase-row {
+    display:flex; align-items:center; margin-bottom:8px; height:24px;
+  }
+  .phase-label { width:100px; flex-shrink:0; }
+  .phase-c { flex:1; display:flex; gap:4px; }
+  .phase-p {
+    flex:1; text-align:center; font-size:11px; font-weight:600; color:var(--muted);
+    letter-spacing:.4px; padding:4px 0;
+  }
+
+  /* Flow */
+  .flow { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:28px 24px; }
+  .flow-grid { display:flex; flex-direction:column; gap:6px; }
+  .flow-row { display:flex; align-items:center; min-height:40px; gap:6px; flex-wrap:wrap; }
+  .flow-box {
+    padding:8px 14px; border-radius:7px; font-size:13px; font-weight:500;
+    text-align:center; flex-shrink:0; white-space:nowrap;
+  }
+  .flow-box.se { background:var(--se-bg); color:#93c5fd; border:1px solid rgba(59,130,246,.2); }
+  .flow-box.fs { background:var(--fs-bg); color:#6ee7b7; border:1px solid rgba(16,185,129,.2); }
+  .flow-box.y  { background:var(--y-bg);  color:#fdba74; border:1px solid rgba(249,115,22,.2); }
+  .flow-box.x  { background:var(--x-bg);  color:#c4b5fd; border:1px solid rgba(139,92,246,.2); }
+  .flow-box.p  { background:var(--p-bg);  color:#fcd34d; border:1px solid rgba(245,158,11,.2); }
+  .flow-box.m0 { background:var(--m0-bg); color:#d1d5db; border:1px solid rgba(107,114,128,.2); }
+  .flow-arrow { color:var(--muted); font-size:13px; flex-shrink:0; }
+  .flow-note { font-size:11px; color:var(--muted); padding:4px 8px; }
+
+  /* MS Cards */
+  .ms { margin-bottom:16px; }
+  .ms-card { background:var(--card); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+  .ms-header {
+    padding:16px 20px; display:flex; justify-content:space-between; align-items:center;
+    cursor:pointer; user-select:none;
+  }
+  .ms-header:hover { background:rgba(255,255,255,.02); }
+  .ms-left { display:flex; align-items:center; gap:12px; }
+  .ms-icon {
+    width:28px; height:28px; border-radius:8px; display:flex; align-items:center;
+    justify-content:center; font-weight:700; font-size:14px; flex-shrink:0;
+  }
+  .ms-icon.m0 { background:var(--m0-bg); color:#d1d5db; }
+  .ms-icon.se { background:var(--se-bg); color:#93c5fd; }
+  .ms-icon.fs { background:var(--fs-bg); color:#6ee7b7; }
+  .ms-icon.y  { background:var(--y-bg);  color:#fdba74; }
+  .ms-icon.x  { background:var(--x-bg);  color:#c4b5fd; }
+  .ms-icon.p  { background:var(--p-bg);  color:#fcd34d; }
+  .ms-tit { font-size:15px; font-weight:600; }
+  .ms-sub { font-size:12px; color:var(--muted); }
+  .ms-arrow { font-size:16px; color:var(--muted); transition:transform .2s; }
+  .ms-card.open .ms-arrow { transform:rotate(180deg); }
+  .ms-body { display:none; padding:0 20px 20px; }
+  .ms-card.open .ms-body { display:block; }
+  .ms-body h4 { font-size:12px; font-weight:600; color:var(--muted); margin:16px 0 8px; text-transform:uppercase; letter-spacing:.4px; }
+  .ms-body h4:first-child { margin-top:0; }
+
+  .item {
+    display:flex; gap:10px; padding:7px 0; border-bottom:1px solid rgba(255,255,255,.03);
+    font-size:14px; align-items:baseline;
+  }
+  .item:last-child { border-bottom:none; }
+  .item { display:flex; gap:10px; padding:8px 0; border-bottom:1px solid rgba(255,255,255,.04); font-size:14px; align-items:baseline; }
+  .item:last-child { border-bottom:none; }
+  .item-c { font-size:11px; font-weight:600; color:var(--muted); min-width:44px; flex-shrink:0; }
+  .item-t { flex:1; }
+  .item-o { font-size:12px; color:var(--muted); white-space:nowrap; }
+  .item-d { font-size:11px; color:var(--x); margin-top:1px; display:block; }
+
+  .dep-table { width:100%; border-collapse:collapse; font-size:13px; }
+  .dep-table th { text-align:left; padding:8px 12px; color:var(--muted); font-weight:600; border-bottom:1px solid var(--border); font-size:12px; text-transform:uppercase; }
+  .dep-table td { padding:10px 12px; border-bottom:1px solid rgba(255,255,255,.04); }
+  .dep-table tr:last-child td { border-bottom:none; }
+  .dep-table .dd { width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:6px; }
+
+  .principles { display:grid; grid-template-columns:repeat(2,1fr); gap:16px; }
+  .principle-card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:20px; }
+  .principle-card h4 { font-size:14px; margin-bottom:6px; }
+  .principle-card p { font-size:13px; color:var(--muted); line-height:1.6; }
+  footer { text-align:center; padding:32px 0; color:var(--muted); font-size:13px; border-top:1px solid var(--border); }
+
+  @media (max-width:800px) {
+    .grid5 { grid-template-columns:repeat(2,1fr); }
+    .principles { grid-template-columns:1fr; }
+    .lane-label { width:70px; font-size:12px; }
+    .phase-label { width:70px; }
+  }
+  @media (max-width:500px) {
+    .grid5 { grid-template-columns:1fr; }
+    .lane-label { width:60px; font-size:11px; }
+    .phase-label { width:60px; }
+    .ms-header { flex-wrap:wrap; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <h1>资源商店全链路规划</h1>
+  <p>从"局部闭环"到"全链路贯通"——五条线推进的里程碑计划</p>
+  <div class="meta">
+    <span>📅 2026.05.22</span>
+    <span>👤 初小宇</span>
+    <span>📋 33 项待办</span>
+    <span>🎯 点击里程碑可展开</span>
+  </div>
+</header>
+
+<!-- Overview -->
+<section>
+  <div class="section-title">五条线总览</div>
+  <div class="grid5">
+    <div class="ov-card se">
+      <div class="tag se">⬆ 最高优先级</div>
+      <h3>A SE 三期</h3>
+      <p>上架/审核/更新/下架/封禁全链路 + 插件跑通生态验证</p>
+      <div class="stat">8 项待办 · 含后端共用模块先跑通</div>
+    </div>
+    <div class="ov-card fs">
+      <div class="tag fs">⇄ 并行</div>
+      <h3>B 帧同步二期</h3>
+      <p>导出/导入/分享码/资源仓库 + 街区迁移 — 纯独立工作</p>
+      <div class="stat">8 项待办 · FS 独立 + 接入</div>
+    </div>
+    <div class="ov-card y">
+      <div class="tag y">⊹ 汇合</div>
+      <h3>Y 接入合并</h3>
+      <p>等 A 和 B 各自做完，FS 接入上架审核共用模块</p>
+      <div class="stat">1 项待办 · 承上启下</div>
+    </div>
+    <div class="ov-card x">
+      <div class="tag x">⚙ 纯后台</div>
+      <h3>X 互通层</h3>
+      <p>三层递进：Asset(上传互通) → 资源包(导出互通) → 商店(购买互通)</p>
+      <div class="stat">3 层 · 与 AB 全程并行</div>
+    </div>
+    <div class="ov-card p">
+      <div class="tag p">⟳ 独立</div>
+      <h3>P 策划管线</h3>
+      <p>MUSE 清洗 / AI 打标 / 官包制作 / 上架</p>
+      <div class="stat">4 项待办 · M0 走到最后</div>
+    </div>
+  </div>
+</section>
+
+<!-- Swim Lane -->
+<section>
+  <div class="section-title">阶段推进视图 <span style="font-size:12px;color:var(--muted);font-weight:400;">（横向为时间流向，同区域=并行）</span></div>
+  <div class="lane-box">
+    <div class="phase-row">
+      <div class="phase-label"></div>
+      <div class="phase-c">
+        <div class="phase-p">奠基</div>
+        <div class="phase-p">并行推进</div>
+        <div class="phase-p">汇合贯通</div>
+      </div>
+    </div>
+
+    <div class="lane-row" style="height:56px;">
+      <div class="lane-label"><span class="dot" style="background:var(--m0)"></span>M0 前置设计</div>
+      <div class="lane-c"><div class="lane-bar bar-m0" style="flex:3;font-size:12px;">SE三期文档 + Asset映射设计 + 共用接口设计 + MUSE方案</div></div>
+    </div>
+
+    <div class="lane-row" style="height:56px;">
+      <div class="lane-label"><span class="dot" style="background:var(--se)"></span>A SE三期</div>
+      <div class="lane-c">
+        <div style="flex:.03"></div>
+        <div class="lane-bar bar-se" style="flex:2;font-size:12px;">后端：上架/审核/封禁/举报能力 → SE前端：资源包上架/H5配置/审核追踪 → 插件商店全链路验证</div>
+      </div>
+    </div>
+
+    <div class="lane-row" style="height:56px;">
+      <div class="lane-label"><span class="dot" style="background:var(--fs)"></span>B 帧同步二期</div>
+      <div class="lane-c">
+        <div style="flex:.03"></div>
+        <div class="lane-bar bar-fs" style="flex:2;font-size:12px;">FS前端：导出/导入/分享码/资源仓库/资源包管理器 → 街区迁移：组合/蛋码/技能/界面转资源包 + 旧功能下线</div>
+      </div>
+    </div>
+
+    <div class="lane-row" style="height:56px;">
+      <div class="lane-label"><span class="dot" style="background:var(--y)"></span>Y 接入合并</div>
+      <div class="lane-c">
+        <div style="flex:2.03"></div>
+        <div class="lane-bar bar-y" style="flex:1;font-size:12px;">FS接入SE已跑通的上架/审核/封禁共用能力（等A后端+B前端都做完）</div>
+      </div>
+    </div>
+
+    <div class="lane-row" style="height:60px;">
+      <div class="lane-label"><span class="dot" style="background:var(--x)"></span>X 互通层</div>
+      <div class="lane-c">
+        <div style="flex:.03"></div>
+        <div class="lane-bar bar-x" style="flex:1.2;font-size:12px;">上传Asset→自动双端生成 · 导出纯美术包→自动双端拥有</div>
+        <div class="lane-bar bar-x" style="flex:.8;background:rgba(139,92,246,.07);font-size:12px;">纯美术包双端可搜 + 一次购买双端拥有 + 更新两端同步</div>
+      </div>
+    </div>
+
+    <div class="lane-row" style="height:56px;">
+      <div class="lane-label"><span class="dot" style="background:var(--p)"></span>P 策划管线</div>
+      <div class="lane-c">
+        <div class="lane-bar bar-p" style="flex:1;font-size:12px;">MUSE资源清洗管线 + AI打标流程 + 官包制作</div>
+        <div class="lane-bar bar-p" style="flex:1;background:rgba(245,158,11,.07);font-size:12px;">同上持续推进</div>
+        <div class="lane-bar bar-p" style="flex:1;background:rgba(245,158,11,.07);font-size:12px;">官包上架到商店（等X.3就绪）</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Dep Flow -->
+<section>
+  <div class="section-title">依赖关系 <span style="font-size:12px;color:var(--muted);font-weight:400;">（→ = 依赖，同行并行）</span></div>
+  <div class="flow">
+    <div class="flow-grid">
+      <div class="flow-row">
+        <div class="flow-box m0">M0 前置设计</div>
+        <div class="flow-arrow">→ → →</div>
+        <div class="flow-note">产出 SE三期文档、Asset映射设计、共用接口设计、MUSE方案，以下全部以此为起点</div>
+      </div>
+
+      <div style="height:14px;"></div>
+
+      <!-- A -->
+      <div class="flow-row">
+        <div class="flow-box se">A SE 三期</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box se" style="min-width:100px;">后端：上架/审核/封禁/举报能力</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box se" style="min-width:100px;">SE前端：上架入口/H5配置/审核追踪</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box se" style="min-width:90px;">插件商店全链路验证</div>
+        <div class="flow-note">最高优先级，独立推进</div>
+      </div>
+
+      <div style="height:8px;"></div>
+
+      <!-- B -->
+      <div class="flow-row">
+        <div class="flow-box fs">B 帧同步二期</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box fs" style="min-width:130px;">FS前端：导出/导入/分享码/资源仓库 + 街区迁移</div>
+        <div class="flow-note">纯独立，不依赖 A，可并行启动</div>
+      </div>
+
+      <div style="height:8px;"></div>
+
+      <!-- Y -->
+      <div class="flow-row">
+        <div style="min-width:10px;"></div>
+        <div class="flow-box y" style="min-width:110px;">Y 接入合并</div>
+        <div class="flow-arrow">← 需要 →</div>
+        <div class="flow-box se" style="min-width:90px;">A 后端能力就绪</div>
+        <div class="flow-arrow">+</div>
+        <div class="flow-box fs" style="min-width:90px;">B 前端闭环</div>
+        <div class="flow-note">等两边各自跑通，FS 接入上架审核共用模块</div>
+      </div>
+
+      <div style="height:8px;"></div>
+
+      <!-- X -->
+      <div class="flow-row">
+        <div class="flow-box x" style="min-width:120px;">X.1 Asset上传互通 + X.2 资源包导出互通</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box x" style="min-width:110px;">X.3 商店互通</div>
+        <div class="flow-arrow">← 还需要 →</div>
+        <div class="flow-box y" style="min-width:70px;">Y 接入</div>
+        <div class="flow-note">X.3 需要 Y（FS已接入上架）+ X.1/X.2（Asset/资源包已互通）都就绪</div>
+      </div>
+
+      <div style="height:8px;"></div>
+
+      <!-- P -->
+      <div class="flow-row">
+        <div class="flow-box p" style="min-width:120px;">P.1~P.3 MUSE清洗/AI打标/官包制作</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box p" style="min-width:90px;">P.4 官包上架</div>
+        <div class="flow-arrow">← 等 →</div>
+        <div class="flow-box x" style="min-width:70px;">X.3 就绪</div>
+        <div class="flow-note">策划全程独立推进，最后一步等商店互通后才能上架</div>
+      </div>
+    </div>
+    </div>
+  </div>
+</section>
+
+<!-- Milestones -->
+<section>
+  <div class="section-title">各里程碑待办清单 <span style="font-size:12px;color:var(--muted);font-weight:400;">（点击展开/折叠）</span></div>
+
+  <!-- M0 -->
+  <div class="ms"><div class="ms-card open" id="m0">
+    <div class="ms-header" onclick="tog('m0')">
+      <div class="ms-left"><div class="ms-icon m0">M</div><div><div class="ms-tit">M0 前置设计</div><div class="ms-sub">后续所有工作依赖这些设计对齐</div></div></div>
+      <div class="ms-arrow">▼</div>
+    </div>
+    <div class="ms-body">
+      <h4>前置设计</h4>
+      <div class="item"><div class="item-c">0.1</div><div class="item-t">SE 三期策划文档编写</div></div>
+      <div class="item"><div class="item-c">0.2</div><div class="item-t">Asset 映射关系表设计——两边 metadata 字段对应规则、文件同构确认</div></div>
+      <div class="item"><div class="item-c">0.3</div><div class="item-t">共用模块接口设计——上架 / 审核 / 更新 / 下架 / 封禁 / 举报的通用接口</div></div>
+      <div class="item"><div class="item-c">0.4</div><div class="item-t">MUSE 资源摸底 + AI 打标方案</div></div>
+    </div>
+  </div></div>
+
+  <!-- A -->
+  <div class="ms"><div class="ms-card" id="a">
+    <div class="ms-header" onclick="tog('a')">
+      <div class="ms-left"><div class="ms-icon se">A</div><div><div class="ms-tit">A SE 三期</div><div class="ms-sub">打通上架链路，用插件跑通生态 — 最高优先级</div></div></div>
+      <div class="ms-arrow">▼</div>
+    </div>
+    <div class="ms-body">
+      <h4>后端（共用模块，先 SE 跑通）</h4>
+      <div class="item"><div class="item-c">A.1</div><div class="item-t">上架→审核→更新→下架→封禁全链路接口</div><div class="item-d">依赖 0.3 接口设计</div></div>
+      <div class="item"><div class="item-c">A.2</div><div class="item-t">举报系统接口</div></div>
+      <div class="item"><div class="item-c">A.3</div><div class="item-t">运营后台审核 / 封禁 / 解封操作界面</div><div class="item-d">依赖 A.1</div></div>
+      <h4>SE 前端（编辑器内）</h4>
+      <div class="item"><div class="item-c">A.4</div><div class="item-t">资源包管理器新增"上架入口"按钮</div></div>
+      <div class="item"><div class="item-c">A.5</div><div class="item-t">H5 上架配置流程——信息填写 / 封面上传 / 提交审核</div><div class="item-d">依赖 A.1</div></div>
+      <div class="item"><div class="item-c">A.6</div><div class="item-t">审核状态追踪——用户查看自己的资源当前在什么状态</div><div class="item-d">依赖 A.1</div></div>
+      <div class="item"><div class="item-c">A.7</div><div class="item-t">举报入口与处理</div><div class="item-d">依赖 A.2</div></div>
+      <h4>生态验证</h4>
+      <div class="item"><div class="item-c">A.8</div><div class="item-t">插件商店全链路跑通——上传→云→上架→审核→获取→下载→更新</div><div class="item-d">依赖 A.1~A.6</div></div>
+    </div>
+  </div></div>
+
+  <!-- B -->
+  <div class="ms"><div class="ms-card" id="b">
+    <div class="ms-header" onclick="tog('b')">
+      <div class="ms-left"><div class="ms-icon fs">B</div><div><div class="ms-tit">B 帧同步二期 <span style="font-size:12px;color:var(--muted);font-weight:400;">— 不含接入上架</span></div><div class="ms-sub">用户侧资源流转闭环 + 街区迁移 — 与 A 并行，纯独立</div></div></div>
+      <div class="ms-arrow">▼</div>
+    </div>
+    <div class="ms-body">
+      <h4>FS 前端（独立推进，不依赖 A）</h4>
+      <div class="item"><div class="item-c">B.1</div><div class="item-t">资源包导出流程——选择资产→打包→上传</div></div>
+      <div class="item"><div class="item-c">B.2</div><div class="item-t">资源包导入流程——获取→预览→导入地图</div></div>
+      <div class="item"><div class="item-c">B.3</div><div class="item-t">分享码机制——生成→分享→校验→获取</div></div>
+      <div class="item"><div class="item-c">B.4</div><div class="item-t">资源仓库界面——取代原资源大厅</div></div>
+      <div class="item"><div class="item-c">B.5</div><div class="item-t">资源包管理器界面——自己的 / 分享获取的 / 商店获取的三分类</div></div>
+      <h4>街区迁移</h4>
+      <div class="item"><div class="item-c">B.6</div><div class="item-t">组合 / 蛋码 / 技能 / 界面街区 → 资源包</div></div>
+      <div class="item"><div class="item-c">B.7</div><div class="item-t">旧功能下线——原资源大厅入口关闭、旧功能入口移除</div></div>
+      <h4>接入</h4>
+      <div class="item"><div class="item-c">B.8</div><div class="item-t">接入后端共用模块——上架 / 审核流程对接</div><div class="item-d">等 A.1 / A.3 就绪</div></div>
+    </div>
+  </div></div>
+
+  <!-- Y -->
+  <div class="ms"><div class="ms-card" id="y">
+    <div class="ms-header" onclick="tog('y')">
+      <div class="ms-left"><div class="ms-icon">Y</div><div><div class="ms-tit" style="color:#fdba74;">Y 接入合并</div><div class="ms-sub">等 A 后端和 B 前端各自就绪后，FS 接入上架审核共用模块</div></div></div>
+      <div class="ms-arrow">▼</div>
+    </div>
+    <div class="ms-body">
+      <div class="item"><div class="item-c">Y.1</div><div class="item-t">FS 接入上架审核共用模块——等 A.1/A.3 后端就绪 + B 前端做完</div><div class="item-d">依赖 A.1/A.3 + B 闭环</div></div>
+    </div>
+  </div></div>
+
+  <!-- X -->
+  <div class="ms"><div class="ms-card" id="x">
+    <div class="ms-header" onclick="tog('x')">
+      <div class="ms-left"><div class="ms-icon x">X</div><div><div class="ms-tit">X 互通层</div><div class="ms-sub">三层递进——纯后台与 A/B 全程并行</div></div></div>
+      <div class="ms-arrow">▼</div>
+    </div>
+    <div class="ms-body">
+      <h4>X.1 Asset 级互通 — 上传即互通</h4>
+      <div class="item"><div class="item-c">X.1a</div><div class="item-t">Asset 映射关系表实现</div><div class="item-d">依赖 0.2 设计</div></div>
+      <div class="item"><div class="item-c">X.1b</div><div class="item-t">SE 上传 → FS 侧同步生成</div></div>
+      <div class="item"><div class="item-c">X.1c</div><div class="item-t">FS 上传 → SE 侧同步生成</div></div>
+      <div class="item"><div class="item-c">X.1d</div><div class="item-t">所有权双端同步</div></div>
+      <h4>X.2 资源包级互通 — 导出即互通</h4>
+      <div class="item"><div class="item-c">X.2</div><div class="item-t">导出纯美术资源包时双端拥有记录</div><div class="item-d">依赖 0.2 设计</div></div>
+      <h4>X.3 商店级互通</h4>
+      <div class="item"><div class="item-c">X.3a</div><div class="item-t">纯美术资源包双端商店可见可搜索</div><div class="item-d">等 A 上架链路 + X.1/X.2 就绪</div></div>
+      <div class="item"><div class="item-c">X.3b</div><div class="item-t">一次购买双端拥有</div></div>
+      <div class="item"><div class="item-c">X.3c</div><div class="item-t">更新同步机制——一端更新→两端感知</div></div>
+    </div>
+  </div></div>
+
+  <!-- P -->
+  <div class="ms"><div class="ms-card" id="p">
+    <div class="ms-header" onclick="tog('p')">
+      <div class="ms-left"><div class="ms-icon p">P</div><div><div class="ms-tit">P 策划管线</div><div class="ms-sub">全程独立推进，最后等互通就绪上架</div></div></div>
+      <div class="ms-arrow">▼</div>
+    </div>
+    <div class="ms-body">
+      <div class="item"><div class="item-c">P.1</div><div class="item-t">MUSE 资源清洗管线搭建</div></div>
+      <div class="item"><div class="item-c">P.2</div><div class="item-t">AI 打标 → 人工审核流程</div></div>
+      <div class="item"><div class="item-c">P.3</div><div class="item-t">官方资源包制作</div></div>
+      <div class="item"><div class="item-c">P.4</div><div class="item-t">官包上架到商店</div><div class="item-d">等 X.3 就绪</div></div>
+    </div>
+  </div></div>
+
+</section>
+
+<!-- Dep Table -->
+<section>
+  <div class="section-title">谁等谁 — 依赖速查</div>
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;">
+  <table class="dep-table">
+    <thead><tr><th>条目</th><th>前置依赖</th><th>原因</th></tr></thead>
+    <tbody>
+      <tr><td><span class="dd" style="background:var(--se)"></span>A.1~A.3</td><td>0.3 流程定义</td><td>流转规则没定不能开发</td></tr>
+      <tr><td><span class="dd" style="background:var(--se)"></span>A.5/A.6</td><td>A.1 后端接口</td><td>前端依赖后端接口就绪</td></tr>
+      <tr><td><span class="dd" style="background:var(--fs)"></span>B.1~B.7</td><td style="color:#6ee7b7;">无外部依赖</td><td>可立即启动，与 A 并行</td></tr>
+      <tr><td><span class="dd" style="background:var(--y)"></span>Y.1</td><td>A.1/A.3 + B 闭环</td><td>等 SE 后端跑通 + B 前端做完</td></tr>
+      <tr><td><span class="dd" style="background:var(--x)"></span>X.1/X.2</td><td>0.2 互通设计</td><td>需要映射表设计完成</td></tr>
+      <tr><td><span class="dd" style="background:var(--x)"></span>X.3</td><td>Y + X.1/X.2</td><td>等 FS 接入上架 + Asset/资源包互通就绪</td></tr>
+      <tr><td><span class="dd" style="background:var(--p)"></span>P.4</td><td>X.3</td><td>等商店互通就绪才能上架</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<!-- Principles -->
+<section>
+  <div class="section-title">关键原则</div>
+  <div class="principles">
+    <div class="principle-card"><h4>SE 优先，错峰复用</h4><p>共用后端模块先在 SE 三期验证通过，帧同步再接入。不同步开发，降低两侧同时出问题的风险。</p></div>
+    <div class="principle-card"><h4>前端完全分离</h4><p>SE 和帧同步资源包数据结构完全不同（SE 类 Roblox 开放 / FS 封闭），前端各自独立实现。</p></div>
+    <div class="principle-card"><h4>上传即互通</h4><p>用户上传 Asset 时后台自动在另一侧生成拥有记录。不需要打资源包，不需要上架。</p></div>
+    <div class="principle-card"><h4>导出即互通</h4><p>纯美术资源包导出时自动双端拥有。含编辑器资产的资源包按版本过滤，不通。</p></div>
+    <div class="principle-card"><h4>一次购买，双端拥有</h4><p>纯美术资源包在商店两端可见，一次购买后两个编辑器中都可用。更新同步。</p></div>
+    <div class="principle-card"><h4>策划管线不依赖技术排期</h4><p>MUSE 清洗、AI 打标、官包制作独立推进。最后等互通就绪上架到商店。</p></div>
+  </div>
+</section>
+
+<footer>资源商店全链路规划 · 初小宇 · 2026.05.22</footer>
+</div>
+<script>
+function tog(id){var e=document.getElementById(id);if(e)e.classList.toggle('open');}
+</script>
+</body>
+</html>

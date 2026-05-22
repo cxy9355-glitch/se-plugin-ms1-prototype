@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SE 编辑器插件商店 MS1 规划</title>
+<style>
+  :root {
+    --accent: #06b6d4;
+    --accent-bg: rgba(6,182,212,.12);
+    --accent2: #0ea5e9;
+    --accent2-bg: rgba(14,165,233,.12);
+    --bg: #0f172a;
+    --card: #1e293b;
+    --border: #334155;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans SC",sans-serif;
+    background:var(--bg); color:var(--text); line-height:1.6;
+    padding:0 24px 80px;
+  }
+  .container { max-width:1100px; margin:0 auto; }
+
+  header { padding:48px 0 32px; border-bottom:1px solid var(--border); margin-bottom:40px; }
+  header h1 { font-size:32px; font-weight:700; margin-bottom:8px; }
+  header p { color:var(--muted); font-size:16px; }
+  .meta { display:flex; gap:24px; margin-top:16px; font-size:14px; color:var(--muted); flex-wrap:wrap; }
+  .tag-accent {
+    display:inline-block; font-size:11px; padding:3px 10px; border-radius:6px; font-weight:600;
+    background:var(--accent-bg); color:#67e8f9; margin-right:4px;
+  }
+  .tag-accent2 { background:var(--accent2-bg); color:#7dd3fc; }
+
+  section { margin-bottom:48px; }
+  .section-title { font-size:20px; font-weight:600; margin-bottom:20px; display:flex; align-items:center; gap:10px; }
+
+  /* Overview */
+  .hero-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:32px; }
+  .hero-card {
+    background:var(--card); border:1px solid var(--border); border-radius:12px; padding:20px;
+    border-top:3px solid var(--accent);
+  }
+  .hero-card h3 { font-size:14px; margin-bottom:4px; }
+  .hero-card p { font-size:12px; color:var(--muted); line-height:1.6; }
+  .hero-card .num {
+    font-size:28px; font-weight:700; color:#67e8f9; margin-bottom:4px;
+  }
+
+  /* State cards */
+  .state-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
+  .state-card {
+    background:var(--card); border:1px solid var(--border); border-radius:12px; padding:20px;
+    border-left:3px solid var(--accent);
+  }
+  .state-card h4 { font-size:14px; margin-bottom:6px; }
+  .state-card ul { list-style:none; padding:0; }
+  .state-card li {
+    font-size:12px; color:var(--muted); padding:4px 0;
+    display:flex; align-items:center; gap:6px;
+  }
+  .state-card li::before { content:"·"; color:var(--accent); font-weight:700; }
+
+  /* Features */
+  .feat-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:16px; }
+  .feat-card {
+    background:var(--card); border:1px solid var(--border); border-radius:12px; padding:20px;
+  }
+  .feat-card h4 { font-size:14px; margin-bottom:6px; display:flex; align-items:center; gap:8px; }
+  .feat-card p { font-size:13px; color:var(--muted); line-height:1.6; }
+  .feat-card .fn { font-size:11px; font-weight:600; color:#67e8f9; margin-top:8px; }
+  .feat-card .fn span { color:var(--muted); font-weight:400; }
+
+  /* Store status flow */
+  /* Ownership Flow (CSS version, replacing ASCII) */
+  .own-flow {
+    background:var(--card); border:1px solid var(--border); border-radius:12px; padding:24px;
+    display:flex; flex-direction:column; align-items:center;
+  }
+  .own-table { border-collapse:collapse; }
+  .own-table td { text-align:center; vertical-align:middle; padding:4px 6px; }
+  .own-box {
+    display:inline-block; padding:10px 18px; border-radius:8px; font-size:13px; font-weight:500;
+  }
+  .own-box.t1 { background:rgba(103,232,249,.12); color:#67e8f9; border:1px solid rgba(103,232,249,.25); }
+  .own-box.t2 { background:rgba(125,211,252,.12); color:#7dd3fc; border:1px solid rgba(125,211,252,.25); }
+  .own-box.t3 { background:rgba(252,211,77,.12); color:#fcd34d; border:1px solid rgba(252,211,77,.25); }
+  .own-box.t4 { background:rgba(167,139,250,.12); color:#a78bfa; border:1px solid rgba(167,139,250,.25); }
+  .own-box.t5 { background:rgba(251,191,36,.12); color:#fbbf24; border:1px solid rgba(251,191,36,.25); }
+  .own-box.t6 { background:rgba(167,139,250,.08); color:#c4b5fd; border:1px solid rgba(167,139,250,.15); }
+  .own-box.sm { padding:6px 14px; font-size:12px; }
+  .own-arrow { color:var(--muted); font-size:13px; padding:0 2px; }
+  .own-tag {
+    font-size:10px; padding:3px 7px; border-radius:4px;
+    background:rgba(255,255,255,.05); color:var(--muted); white-space:nowrap;
+  }
+  .own-vline { display:block; margin:0 auto; width:2px; height:20px; background:var(--border); }
+  .own-sub { font-size:11px; color:var(--muted); }
+  .own-note { font-size:11px; color:var(--muted); margin-top:12px; text-align:center; }
+  .status-flow {
+    background:var(--card); border:1px solid var(--border); border-radius:12px; padding:20px;
+    display:flex; align-items:center; justify-content:center; gap:12px; flex-wrap:wrap;
+  }
+  .sf-box {
+    padding:8px 16px; border-radius:8px; font-size:13px; font-weight:500;
+    border:1px solid var(--border);
+  }
+  .sf-box.s0 { background:var(--accent-bg); color:#67e8f9; border-color:rgba(6,182,212,.3); }
+  .sf-box.s1 { background:rgba(245,158,11,.12); color:#fcd34d; border-color:rgba(245,158,11,.3); }
+  .sf-box.s2 { background:rgba(16,185,129,.12); color:#6ee7b7; border-color:rgba(16,185,129,.3); }
+  .sf-box.s3 { background:rgba(107,114,128,.12); color:#d1d5db; border-color:rgba(107,114,128,.3); }
+  .sf-box.s4 { background:rgba(239,68,68,.12); color:#fca5a5; border-color:rgba(239,68,68,.3); }
+  .sf-arrow { color:var(--muted); font-size:16px; }
+
+  /* Task list */
+  .task-sect { margin-bottom:24px; }
+  .task-sect h4 {
+    font-size:13px; font-weight:600; color:var(--muted); margin-bottom:10px;
+    text-transform:uppercase; letter-spacing:.4px;
+  }
+  .task-item {
+    display:flex; gap:10px; padding:8px 0; border-bottom:1px solid rgba(255,255,255,.04);
+    font-size:14px; align-items:baseline;
+  }
+  .task-item:last-child { border-bottom:none; }
+  .task-c { font-size:11px; font-weight:600; color:var(--muted); min-width:40px; flex-shrink:0; }
+  .task-t { flex:1; }
+  .task-o { font-size:12px; color:var(--muted); white-space:nowrap; }
+  .task-d { font-size:11px; color:#a78bfa; margin-top:1px; display:block; }
+
+  .task-box {
+    background:var(--card); border:1px solid var(--border); border-radius:12px; padding:0 20px;
+  }
+
+  /* Dep table */
+  .dep-t { width:100%; border-collapse:collapse; font-size:13px; }
+  .dep-t th { text-align:left; padding:8px 12px; color:var(--muted); font-weight:600; border-bottom:1px solid var(--border); font-size:12px; text-transform:uppercase; }
+  .dep-t td { padding:10px 12px; border-bottom:1px solid rgba(255,255,255,.04); }
+  .dep-t tr:last-child td { border-bottom:none; }
+  .dep-t .dd { width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:6px; }
+
+  /* Footer */
+  footer { text-align:center; padding:32px 0; color:var(--muted); font-size:13px; border-top:1px solid var(--border); }
+
+  @media (max-width:800px) {
+    .hero-grid { grid-template-columns:1fr; }
+    .state-grid { grid-template-columns:repeat(2,1fr); }
+    .feat-grid { grid-template-columns:1fr; }
+  }
+  @media (max-width:500px) {
+    .state-grid { grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <h1>SE 编辑器插件商店 MS1</h1>
+  <p>为 UGC 插件补充云端保存和资源商店上架能力——打通本地开发 → 云端存档 → 商店发布 → 用户获取的全链路</p>
+  <div class="meta">
+    <span>📅 2026.05.22</span>
+    <span>👤 初小宇</span>
+    <span>📋 关联 → <a href="resource-store-plan.html" style="color:#67e8f9;">资源商店全链路规划</a></span>
+  </div>
+</section>
+
+<!-- Overview -->
+<section>
+  <div class="section-title">MS1 范围</div>
+  <div class="hero-grid">
+    <div class="hero-card">
+      <div class="num">3</div>
+      <h3>插件管理三 tab</h3>
+      <p>官方插件 / 本地插件 / 我的插件（我创建的 + 我获取的）</p>
+    </div>
+    <div class="hero-card">
+      <div class="num">4</div>
+      <h3>四种归属流转</h3>
+      <p>官方插件→导出→本地插件→上传云→我创建的→上架→资源商店→获取→我获取的</p>
+    </div>
+    <div class="hero-card">
+      <div class="num">4</div>
+      <h3>商店状态</h3>
+      <p>审核中 → 已上架 → 已下架 / 已封禁，完整生命周期管理</p>
+    </div>
+  </div>
+</section>
+
+<!-- Ownership Flow (table layout for exact alignment) -->
+<section>
+  <div class="section-title">插件归属与流转</div>
+  <div class="own-flow">
+    <table class="own-table">
+      <!-- Row 1: Main chain -->
+      <tr>
+        <td><div class="own-box t1">官方插件</div></td>
+        <td class="own-arrow">→</td>
+        <td><span class="own-tag">导出</span></td>
+        <td class="own-arrow">→</td>
+        <td><div class="own-box t2">本地插件</div></td>
+        <td class="own-arrow">→</td>
+        <td><span class="own-tag">上传到云</span></td>
+        <td class="own-arrow">→</td>
+        <td><div class="own-box t3">我创建的<br><span class="own-sub">（本机+云端）</span></div></td>
+        <td class="own-arrow">→</td>
+        <td><span class="own-tag">上架</span></td>
+        <td class="own-arrow">→</td>
+        <td><div class="own-box t4">资源商店<br><span class="own-sub">（公开可见）</span></div></td>
+      </tr>
+      <!-- Vertical branch 1: 我创建的 → 云端副本 -->
+      <tr>
+        <td colspan="8"></td>
+        <td><div class="own-vline"></div></td>
+        <td colspan="3"></td>
+        <td><div class="own-vline"></div></td>
+      </tr>
+      <tr>
+        <td colspan="8"></td>
+        <td style="font-size:11px;color:var(--muted);">同步 / 恢复</td>
+        <td colspan="3"></td>
+        <td style="font-size:11px;color:var(--muted);">获取</td>
+      </tr>
+      <tr>
+        <td colspan="8"></td>
+        <td><div class="own-vline"></div></td>
+        <td colspan="3"></td>
+        <td><div class="own-vline"></div></td>
+      </tr>
+      <tr>
+        <td colspan="8"></td>
+        <td><div class="own-box t5 sm">云端副本<br><span class="own-sub">（私有存档）</span></div></td>
+        <td colspan="3"></td>
+        <td><div class="own-box t6 sm">我获取的<br><span class="own-sub">（仅本机）</span></div></td>
+      </tr>
+    </table>
+    <div class="own-note">
+      上架时从云端副本取快照生成商店副本，两者独立 · 同步不影响上架 · 下架/封禁不影响云端
+    </div>
+  </div>
+</section>
+
+<!-- Four Types -->
+<section>
+  <div class="section-title">四种归属类型</div>
+  <div class="state-grid">
+    <div class="state-card" style="border-left-color:#67e8f9;">
+      <h4>官方插件</h4>
+      <ul>
+        <li>编辑器内置目录，不可修改</li>
+        <li>操作：打开、导出到本地</li>
+        <li>MS1 内置 sample_se 示例</li>
+      </ul>
+    </div>
+    <div class="state-card" style="border-left-color:#7dd3fc;">
+      <h4>本地插件</h4>
+      <ul>
+        <li>本机 ugc_plugin 暂存，无云端备份</li>
+        <li>操作：新建、导入、打开、重命名、删除</li>
+        <li>上传到云后移入"我创建的"</li>
+      </ul>
+    </div>
+    <div class="state-card" style="border-left-color:#fcd34d;">
+      <h4>我创建的</h4>
+      <ul>
+        <li>本机+云端双副本，手动同步/恢复</li>
+        <li>三种一致性状态：已同步/本地有修改/本地文件不存在</li>
+        <li>操作：同步到云、恢复、上架、删除</li>
+      </ul>
+    </div>
+    <div class="state-card" style="border-left-color:#a78bfa;">
+      <h4>我获取的</h4>
+      <ul>
+        <li>来自商店，仅本机</li>
+        <li>四种状态：未下载/已是最新/有更新可用/已下架</li>
+        <li>操作：打开、下载、更新、查看商店详情</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- Store Status Flow -->
+<section>
+  <div class="section-title">商店状态流转</div>
+  <div class="status-flow">
+    <div class="sf-box s0">提交上架</div>
+    <div class="sf-arrow">→</div>
+    <div class="sf-box s1">审核中</div>
+    <div class="sf-arrow">→ 通过 →</div>
+    <div class="sf-box s2">已上架</div>
+    <div class="sf-arrow">← 重新上架 ←</div>
+    <div class="sf-box s3">已下架</div>
+    <div class="sf-arrow">↘ 封禁 ↘</div>
+    <div class="sf-box s4">已封禁</div>
+  </div>
+  <div style="font-size:12px;color:var(--muted);margin-top:12px;text-align:center;">
+    审核仅审封面图，走运营自动审核流程<br>
+    已下架可重新提交审核上架 · 已封禁需申诉解除
+  </div>
+</section>
+
+<!-- Features -->
+<section>
+  <div class="section-title">功能模块</div>
+  <div class="feat-grid">
+    <div class="feat-card">
+      <h4><span style="color:#67e8f9;">📦</span> 插件管理界面</h4>
+      <p>编辑器顶部工具栏"插件"入口 → 三 tab 弹窗（官方/本地/我的）。我的插件内分"我创建的"和"我获取的"两个子列表。未登录时隐藏"我的插件"tab。</p>
+      <div class="fn">涉及：新建/导入/删除/重命名/同步/恢复/上架入口</div>
+    </div>
+    <div class="feat-card">
+      <h4><span style="color:#67e8f9;">☁️</span> 云端存储</h4>
+      <p>本地→云端：整包强制覆盖，不做冲突检测。前提校验 config.json 字段完整性、entry 文件存在、包体 ≤10MB。云端←本地：恢复时同样强制覆盖。</p>
+      <div class="fn">限制：单插件 ≤ 10MB · 无版本冲突处理</div>
+    </div>
+    <div class="feat-card">
+      <h4><span style="color:#67e8f9;">🏪</span> 商店上架</h4>
+      <p>两种模式：新发布 / 更新已有插件。上架时取云端副本快照。必填：插件名称/描述/版本号(x.x.x)/封面截图(1-4张)/分类标签(单选)。提交后运营自动审核封面图。</p>
+      <div class="fn">MS1 所有插件免费 · 审核通过/驳回两态 · 驳回不产生持久状态</div>
+    </div>
+    <div class="feat-card">
+      <h4><span style="color:#67e8f9;">📥</span> 获取与更新</h4>
+      <p>用户获取后系统记录拥有关系，不立即下载。在编辑器"我获取的"中触发下载。打开插件管理时自动检查商店版本，有新版本标记"有更新可用"。</p>
+      <div class="fn">下架：已获取用户保留本地文件不可更新 · 封禁：拉取时过滤 + 删除本地</div>
+    </div>
+    <div class="feat-card">
+      <h4><span style="color:#67e8f9;">🔖</span> 商店前端</h4>
+      <p>插件作为资源商店新资源类型，左侧导航新增"插件"主分类及 7 个二级分类。卡片展示封面/名称/作者/好评率/获取次数。详情页支持截图轮播和详细信息。</p>
+      <div class="fn">分类：编辑器工具/动画/特效/UI/批量操作/测试调试/其他</div>
+    </div>
+    <div class="feat-card">
+      <h4><span style="color:#67e8f9;">📊</span> 数据埋点</h4>
+      <p>6 条行为日志：上传到云、发布上架、更新版本、打开插件、获取插件、下载插件。支持 US 平台看板（插件使用 TOP100）。</p>
+      <div class="fn">埋点字段：plugin_size / plugin_id / category / version / plugin_source / is_update</div>
+    </div>
+  </div>
+</section>
+
+<!-- Tasks -->
+<section>
+  <div class="section-title">待办项</div>
+
+  <div class="task-box">
+    <div class="task-sect" style="padding-top:12px;">
+      <h4>A. 编辑器插件管理界面</h4>
+      <div class="task-item"><div class="task-c">A.1</div><div class="task-t">三 tab 弹窗框架：官方插件 / 本地插件 / 我的插件（我创建的 + 我获取的）</div></div>
+      <div class="task-item"><div class="task-c">A.2</div><div class="task-t">本地插件列表：新建、导入、打开、重命名、删除、上传到云、打开文件夹</div></div>
+      <div class="task-item"><div class="task-c">A.3</div><div class="task-t">"我创建的"列表：同步到云、从云端恢复、上架入口、删除、重命名，含一致性状态显示</div></div>
+      <div class="task-item"><div class="task-c">A.4</div><div class="task-t">"我获取的"列表：下载、更新、查看商店详情、打开文件夹，含状态管理（未下载/已是最新/有更新/已下架）</div></div>
+      <div class="task-item"><div class="task-c">A.5</div><div class="task-t">官方插件 tab：打开、导出到本地</div></div>
+    </div>
+  </div>
+
+  <div style="height:16px;"></div>
+
+  <div class="task-box">
+    <div class="task-sect" style="padding-top:12px;">
+      <h4>B. 云端存储 &amp; 上架审核</h4>
+      <div class="task-item"><div class="task-c">B.1</div><div class="task-t">云端存储能力：上传(同步到云) / 下载(从云端恢复) / 删除，含校验规则（config 字段/entry 存在/≤10MB）</div></div>
+      <div class="task-item"><div class="task-c">B.2</div><div class="task-t">上架全链路：新发布/更新已有插件模式、封面截图上传与校验、表单提交与校验、审核通过/驳回状态流转</div><div class="task-d">← 依赖 B.1 云端存储就绪</div></div>
+      <div class="task-item"><div class="task-c">B.3</div><div class="task-t">获取与拥有关系：用户获取记录拥有关系、不可重复获取、同一作者不可获取自己的插件</div></div>
+      <div class="task-item"><div class="task-c">B.4</div><div class="task-t">版本管理：版本格式校验(x.x.x)、不可重复、历史版本保留、更新检测与推送</div></div>
+      <div class="task-item"><div class="task-c">B.5</div><div class="task-t">下架与封禁：作者主动下架（已获取用户保留本地文件不可更新）、平台封禁（客户端过滤+删除本地+toast）</div></div>
+    </div>
+  </div>
+
+  <div style="height:16px;"></div>
+
+  <div class="task-box">
+    <div class="task-sect" style="padding-top:12px;">
+      <h4>C. 商店前端</h4>
+      <div class="task-item"><div class="task-c">C.1</div><div class="task-t">商店浏览页：左侧分类导航（插件+7 个二级分类）、插件卡片（封面/名称/作者/好评率/获取次数/获取按钮）</div></div>
+      <div class="task-item"><div class="task-c">C.2</div><div class="task-t">插件详情页：封面截图轮播、详细信息（版本/发布时间/大小/获取次数/分类路径/搜索标签）、获取按钮</div></div>
+      <div class="task-item"><div class="task-c">C.3</div><div class="task-t">我的资源页：上架中列表（含状态 badge + 下架/重新上架/查看详情操作）、已获取列表（仅查看详情）</div></div>
+    </div>
+  </div>
+
+  <div style="height:16px;"></div>
+
+  <div class="task-box">
+    <div class="task-sect" style="padding-top:12px;padding-bottom:12px;">
+      <h4>D. 数据埋点 &amp; 运营</h4>
+      <div class="task-item"><div class="task-c">D.1</div><div class="task-t">6 条行为日志埋点接入：上传到云 / 发布上架 / 更新版本 / 打开插件 / 获取插件 / 下载插件</div></div>
+      <div class="task-item"><div class="task-c">D.2</div><div class="task-t">US 平台看板：插件使用 TOP100 看板搭建</div></div>
+      <div class="task-item"><div class="task-c">D.3</div><div class="task-t">封面图运营自动审核流程对接</div></div>
+    </div>
+  </div>
+
+</section>
+
+<!-- Dep Table -->
+<section>
+  <div class="section-title">谁等谁 — 依赖速查</div>
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;">
+  <table class="dep-t">
+    <thead><tr><th>条目</th><th>前置依赖</th><th>原因</th></tr></thead>
+    <tbody>
+      <tr><td><span class="dd" style="background:var(--accent)"></span>A.1~A.5</td><td style="color:#6ee7b7;">无外部依赖</td><td>编辑器 UI 改造，可独立启动</td></tr>
+      <tr><td><span class="dd" style="background:var(--accent)"></span>B.1</td><td style="color:#6ee7b7;">无外部依赖</td><td>云端存储独立建设</td></tr>
+      <tr><td><span class="dd" style="background:var(--accent)"></span>B.2~B.5</td><td>B.1 + 资源商店共用接口</td><td>上架/获取/下架依赖云端存储和商店后台</td></tr>
+      <tr><td><span class="dd" style="background:var(--accent)"></span>C.1~C.3</td><td>B.2~B.4</td><td>商店前端依赖上架/获取/版本接口就绪</td></tr>
+      <tr><td><span class="dd" style="background:var(--accent)"></span>D.1</td><td>B.1, B.2</td><td>埋点随功能上线</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<!-- Relation to resource-store-plan -->
+<section>
+  <div class="section-title">与资源商店全链路规划的关系</div>
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;">
+    <p style="font-size:14px;color:var(--muted);line-height:1.8;margin-bottom:12px;">
+      插件 MS1 是 <a href="resource-store-plan.html" style="color:#67e8f9;">资源商店全链路规划</a> 中 <strong>A.8 插件商店全链路验证</strong> 的具体实现。它也是<strong>SE 三期</strong>的第一个生态验证——用插件这种相对轻量的资源类型跑通"上传→上架→审核→获取→下载→更新"全流程。
+    </p>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;">
+      <div style="font-size:12px;padding:8px 16px;background:var(--accent-bg);border-radius:8px;border:1px solid rgba(6,182,212,.2);">
+        ✅ 可独立推进 —— 插件管理界面和云端存储不依赖其他模块
+      </div>
+      <div style="font-size:12px;padding:8px 16px;background:rgba(139,92,246,.12);border-radius:8px;border:1px solid rgba(139,92,246,.2);">
+        🔄 商店前端复用资源商店已有能力，仅新增插件类型
+      </div>
+      <div style="font-size:12px;padding:8px 16px;background:rgba(245,158,11,.12);border-radius:8px;border:1px solid rgba(245,158,11,.2);">
+        ⏳ 上架/获取/封禁等走资源商店共用模块，等待后端就绪
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  SE 编辑器插件商店 MS1 · 初小宇 · 2026.05.22 · 关联：<a href="resource-store-plan.html" style="color:#67e8f9;">资源商店全链路规划</a>
+</footer>
+
+</div>
+</body>
+</html>
