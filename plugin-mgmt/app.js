@@ -157,12 +157,12 @@ function createMyCreatedCard(p) {
   }
 
   return '' +
-    '<div class="plugin-card">' +
+    '<div class="' + (isMissing ? 'plugin-card card-disabled' : 'plugin-card') + '">' +
       '<div class="card-row">' +
         iconHTML() +
         '<div class="card-info">' +
           '<div class="plugin-meta">' +
-            '<span class="plugin-name">' + esc(p.name) + '</span>' +
+            '<span class="' + (isMissing ? 'plugin-name' : 'plugin-name') + '">' + esc(p.name) + '</span>' +
             '<span class="badge ' + badgeClass(p.status) + '">' + statusText(p.status) + '</span>' +
             storeStatusBadge(p.storeStatus) +
           '</div>' +
