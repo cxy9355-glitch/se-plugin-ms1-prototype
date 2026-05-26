@@ -2,7 +2,7 @@
 // SAMPLE DATA
 // =============================================================
 var officialPlugins = [
-  { name: 'SE UGC Plugin Sample', ver: '1.0.0', desc: 'SE 模式编辑器 API 测试示例' }
+  { name: 'SE UGC Plugin Sample', desc: 'SE 模式编辑器 API 测试示例' }
 ];
 
 var myCreatedPlugins = [
@@ -91,7 +91,6 @@ function createOfficialCard(p) {
         '<div class="card-info">' +
           '<div class="plugin-meta">' +
             '<span class="plugin-name">' + esc(p.name) + '</span>' +
-            '<span class="badge badge-version">v' + esc(p.ver) + '</span>' +
           '</div>' +
         '</div>' +
       '</div>' +
