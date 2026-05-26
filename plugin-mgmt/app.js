@@ -6,16 +6,16 @@ var officialPlugins = [
 ];
 
 var myCreatedPlugins = [
-  { name: '批量对齐工具', ver: '1.1.0', status: 'synced' },
-  { name: '资源扫描器', ver: '0.9.0', status: 'modified' },
-  { name: '关系图谱生成器', ver: '1.0.0', status: 'missing' }
+  { name: '批量对齐工具', status: 'synced' },
+  { name: '资源扫描器', status: 'modified' },
+  { name: '关系图谱生成器', status: 'missing' }
 ];
 
 var myAcquiredPlugins = [
-  { name: '一键染色工具', ver: '2.0.1', author: '张三', status: 'updated' },
-  { name: '地图模板管理器', ver: '1.3.0', author: '李四', status: 'update-available' },
-  { name: '场景批量导出器', ver: '1.0.0', author: '王五', status: 'not-downloaded' },
-  { name: '灯光预设工具', ver: '0.8.0', author: '赵六', status: 'unpublished' }
+  { name: '一键染色工具', storeVer: '2.0.1', author: '张三', status: 'updated' },
+  { name: '地图模板管理器', storeVer: '1.3.0', author: '李四', status: 'update-available' },
+  { name: '场景批量导出器', storeVer: '1.0.0', author: '王五', status: 'not-downloaded' },
+  { name: '灯光预设工具', storeVer: '0.8.0', author: '赵六', status: 'unpublished' }
 ];
 
 var localPlugins = [];
@@ -42,7 +42,6 @@ function addDefaultLocal() {
   localPlugins.push({
     id: localIdCounter,
     name: '我的测试插件',
-    ver: '0.1.0',
     path: 'C:/Users/Admin/Documents/EggyPartyEditor/ugc_plugin/my_test/'
   });
 }
@@ -100,7 +99,7 @@ function createOfficialCard(p) {
       '<div class="card-row">' +
         '<div class="plugin-actions">' +
           '<button class="btn btn-outline">打开</button>' +
-          '<button class="btn btn-outline btn-export-to-local" data-name="' + escAttr(p.name) + '" data-ver="' + escAttr(p.ver) + '">导出到本地</button>' +
+          '<button class="btn btn-outline btn-export-to-local" data-name="' + escAttr(p.name) + '">导出到本地</button>' +
         '</div>' +
       '</div>' +
     '</div>';
@@ -145,7 +144,7 @@ function createMyCreatedCard(p) {
     btnSync = '<button class="btn btn-outline">同步到云</button>';
     btnRename = '<button class="btn btn-ghost btn-rename" data-name="' + escAttr(p.name) + '">重命名</button>';
     btnFolder = '<button class="btn btn-ghost btn-open-folder" data-name="' + escAttr(p.name) + '">打开文件夹</button>';
-    btnPublish = '<button class="btn btn-primary btn-publish" data-name="' + escAttr(p.name) + '" data-ver="' + escAttr(p.ver) + '">上架</button>';
+    btnPublish = '<button class="btn btn-primary btn-publish" data-name="' + escAttr(p.name) + '">上架</button>';
     if (p.storeStatus === 'reviewing') {
       btnPublish = '<span class="has-tooltip" data-tooltip="审核中，请等待审核完成"><button class="btn btn-primary" disabled>上架</button></span>';
     }
@@ -158,13 +157,12 @@ function createMyCreatedCard(p) {
   }
 
   return '' +
-    '<div class="' + cardClass + '">' +
+    '<div class="plugin-card">' +
       '<div class="card-row">' +
         iconHTML() +
         '<div class="card-info">' +
           '<div class="plugin-meta">' +
-            '<span class="' + nameClass + '">' + esc(p.name) + '</span>' +
-            '<span class="badge badge-version">v' + esc(p.ver) + '</span>' +
+            '<span class="plugin-name">' + esc(p.name) + '</span>' +
             '<span class="badge ' + badgeClass(p.status) + '">' + statusText(p.status) + '</span>' +
             storeStatusBadge(p.storeStatus) +
           '</div>' +
@@ -208,7 +206,7 @@ function createAcquiredCard(p) {
           '<div class="plugin-meta">' +
             '<span class="plugin-name">' + esc(p.name) + '</span>' +
             '<span class="plugin-author">@' + esc(p.author) + '</span>' +
-            '<span class="badge badge-version">v' + esc(p.ver) + '</span>' +
+            '<span class="badge badge-version">v' + esc(p.storeVer) + '</span>' +
             '<span class="badge ' + badgeClass(p.status) + '">' + statusText(p.status) + '</span>' +
           '</div>' +
         '</div>' +
@@ -229,7 +227,6 @@ function createLocalCard(p) {
         iconHTML() +
         '<div class="card-info">' +
           '<span class="plugin-name">' + esc(p.name) + '</span>' +
-          '<span class="badge badge-version">v' + esc(p.ver) + '</span>' +
         '</div>' +
       '</div>' +
       '<div class="card-row">' +
@@ -368,7 +365,6 @@ document.getElementById('btnConfirmCreate').addEventListener('click', function()
   localPlugins.push({
     id: localIdCounter,
     name: name,
-    ver: '0.1.0',
     path: name.replace(/\s+/g, '_') + '/'
   });
   closeModal('modalNewPlugin');
@@ -534,13 +530,13 @@ function openPublishForm() {
   // Pre-fill plugin name and version
   if (publishTarget) {
     document.getElementById('pkgName').value = publishTarget.name;
-    document.getElementById('pkgVersion').value = publishTarget.ver;
+    document.getElementById('pkgVersion').value = '1.0.0';
   }
   // Update target select
   var sel = document.getElementById('updateTarget');
-  sel.innerHTML = '<option value="">请选择目标插件</option>';
+  sel.innerHTML = '<option value="">请选择目标商品</option>';
   myCreatedPlugins.forEach(function(p) {
-    sel.innerHTML += '<option value="' + escAttr(p.name) + '">' + esc(p.name) + ' (v' + esc(p.ver) + ')</option>';
+    sel.innerHTML += '<option value="' + escAttr(p.name) + '">' + esc(p.name) + '</option>';
   });
   openModal('modalPublish');
   validatePublishForm();
@@ -656,9 +652,9 @@ function doDelete(mode) {
     renderMyCreated();
     // Also update publish target select
     var sel = document.getElementById('updateTarget');
-    sel.innerHTML = '<option value="">请选择目标插件</option>';
+    sel.innerHTML = '<option value="">请选择目标商品</option>';
     myCreatedPlugins.forEach(function(p) {
-      sel.innerHTML += '<option value="' + escAttr(p.name) + '">' + esc(p.name) + ' (v' + esc(p.ver) + ')</option>';
+      sel.innerHTML += '<option value="' + escAttr(p.name) + '">' + esc(p.name) + '</option>';
     });
   }
   closeModal('modalDelete');
@@ -726,13 +722,13 @@ document.addEventListener('click', function(e) {
 document.getElementById('btnConfirmUploadCloud').addEventListener('click', function() {
   if (!uploadTarget) return;
   localPlugins = localPlugins.filter(function(p) { return p.name !== uploadTarget.name; });
-  myCreatedPlugins.unshift({ name: uploadTarget.name, ver: '0.1.0', status: 'synced' });
+  myCreatedPlugins.unshift({ name: uploadTarget.name, status: 'synced' });
   renderLocal();
   renderMyCreated();
   var sel = document.getElementById('updateTarget');
-  sel.innerHTML = '<option value="">请选择目标插件</option>';
+  sel.innerHTML = '<option value="">请选择目标商品</option>';
   myCreatedPlugins.forEach(function(p) {
-    sel.innerHTML += '<option value="' + escAttr(p.name) + '">' + esc(p.name) + ' (v' + esc(p.ver) + ')</option>';
+    sel.innerHTML += '<option value="' + escAttr(p.name) + '">' + esc(p.name) + '</option>';
   });
   closeModal('modalUploadCloud');
   uploadTarget = null;
@@ -781,7 +777,7 @@ document.addEventListener('click', function(e) {
   if (!btn) return;
   var name = btn.dataset.name;
   myAcquiredPlugins.forEach(function(p) {
-    if (p.name === name) { p.status = 'updated'; p.ver = p.ver.replace(/\d+$/, function(n) { return +n + 1; }); }
+    if (p.name === name) { p.status = 'updated'; }
   });
   renderMyAcquired();
 });
@@ -879,7 +875,7 @@ var exportTarget = null;
 document.addEventListener('click', function(e) {
   var btn = e.target.closest('.btn-export-to-local');
   if (!btn) return;
-  exportTarget = { name: btn.dataset.name, ver: btn.dataset.ver };
+  exportTarget = { name: btn.dataset.name };
   document.getElementById('exportPluginName').textContent = exportTarget.name;
   openModal('modalExportToLocal');
 });
@@ -899,7 +895,6 @@ document.getElementById('btnConfirmExportToLocal').addEventListener('click', fun
   localPlugins.push({
     id: localIdCounter,
     name: name,
-    ver: exportTarget.ver,
     path: name.replace(/\s+/g, '_') + '/'
   });
   renderLocal();
@@ -920,7 +915,6 @@ document.getElementById('btnImportPlugin').addEventListener('click', function() 
   localPlugins.push({
     id: localIdCounter,
     name: '导入的插件 ' + localIdCounter,
-    ver: '0.1.0',
     path: 'D:/Imported/plugin_' + localIdCounter + '/'
   });
   renderLocal();
