@@ -1,21 +1,26 @@
 // =============================================================
 // SAMPLE DATA
 // =============================================================
+// menuShown: 是否在【插件】菜单快捷入口中显示，默认 false
+// 演示数据里预置几个 on 的方便看效果
 var officialPlugins = [
-  { name: 'SE UGC Plugin Sample', desc: 'SE 模式编辑器 API 测试示例' }
+  { name: 'SE UGC Plugin Sample', folder: 'sample_se', desc: 'SE 模式编辑器 API 测试示例（原 MS1 内置，已迁移到 res/plugin）', external: true, menuShown: false },
+  { name: '资源扫描器',           folder: 'resource_scan', desc: '扫描当前地图中的资源引用', external: false, menuShown: false },
+  { name: '三视图预览',            folder: 'triview_preview', desc: 'AI 模型三视图预览', external: false, menuShown: false },
+  { name: '批量对齐工具',          folder: 'batch_align', desc: '批量对齐场景组件（外放给 UGC 作者试用）', external: true, menuShown: false }
 ];
 
 var myCreatedPlugins = [
-  { name: '批量对齐工具', status: 'synced' },
-  { name: '资源扫描器', status: 'modified' },
-  { name: '关系图谱生成器', status: 'missing' }
+  { name: '批量对齐工具-个人版', status: 'synced', menuShown: true, menuShownAt: 1 },
+  { name: '资源扫描器-个人版', status: 'modified', menuShown: false },
+  { name: '关系图谱生成器', status: 'missing', menuShown: false }
 ];
 
 var myAcquiredPlugins = [
-  { name: '一键染色工具', storeVer: '2.0.1', author: '张三', status: 'updated' },
-  { name: '地图模板管理器', storeVer: '1.3.0', author: '李四', status: 'update-available' },
-  { name: '场景批量导出器', storeVer: '1.0.0', author: '王五', status: 'not-downloaded' },
-  { name: '灯光预设工具', storeVer: '0.8.0', author: '赵六', status: 'unpublished' }
+  { name: '一键染色工具', storeVer: '2.0.1', author: '张三', status: 'updated', menuShown: true, menuShownAt: 2 },
+  { name: '地图模板管理器', storeVer: '1.3.0', author: '李四', status: 'update-available', menuShown: false },
+  { name: '场景批量导出器', storeVer: '1.0.0', author: '王五', status: 'not-downloaded', menuShown: false },
+  { name: '灯光预设工具', storeVer: '0.8.0', author: '赵六', status: 'unpublished', menuShown: false }
 ];
 
 var localPlugins = [];
@@ -25,6 +30,7 @@ var deleteTarget = null;
 var publishTarget = null;
 var activePublishMode = 'new';
 var TAKEN_VERSION = '1.0.0';
+var officialView = 'internal'; // 'internal' 或 'publish'，仅原型演示用
 
 // =============================================================
 // INIT
@@ -35,6 +41,7 @@ var TAKEN_VERSION = '1.0.0';
   renderMyCreated();
   renderMyAcquired();
   renderLocal();
+  renderPluginDropdown();
 })();
 
 function addDefaultLocal() {
@@ -42,9 +49,12 @@ function addDefaultLocal() {
   localPlugins.push({
     id: localIdCounter,
     name: '我的测试插件',
-    path: 'C:/Users/Admin/Documents/EggyPartyEditor/ugc_plugin/my_test/'
+    path: 'C:/Users/Admin/Documents/EggyPartyEditor/ugc_plugin/my_test/',
+    menuShown: true, menuShownAt: 0
   });
 }
+
+var menuShownCounter = 10; // 后续开启的时间戳递增
 
 // =============================================================
 // STATUS UTILS
@@ -82,8 +92,24 @@ function iconHTML() {
   return '<div class="plugin-icon">&#x1F9E9;</div>';
 }
 
+// 「菜单栏显示」开关（所有卡片通用）
+function menuToggleHTML(pluginName, isOn) {
+  return '<span class="menu-toggle' + (isOn ? ' on' : '') + '" data-plugin-name="' + escAttr(pluginName) + '" title="开启后该插件出现在编辑器【插件】菜单下方作为快捷入口">菜单栏显示</span>';
+}
+
 // --- 官方插件 card ---
-function createOfficialCard(p) {
+function createOfficialCard(p, view) {
+  // 非 publish 版：只对"是否外放=否"的条目显示 [不外放] 灰色小标签；外放=是 的不显示任何标签
+  // publish 版：不显示任何外放相关标签
+  var externalBadge = '';
+  if (view !== 'publish' && !p.external) {
+    externalBadge = '<span class="badge badge-internal-only" title="仅非 publish 版可见，publish 版会过滤">不外放</span>';
+  }
+  // [打开文件夹] 按钮仅非 publish 版显示
+  var folderBtn = view !== 'publish'
+    ? '<button class="btn btn-ghost btn-open-official-folder" data-folder="' + escAttr(p.folder) + '">打开文件夹</button>'
+    : '';
+
   return '' +
     '<div class="plugin-card">' +
       '<div class="card-row">' +
@@ -91,6 +117,7 @@ function createOfficialCard(p) {
         '<div class="card-info">' +
           '<div class="plugin-meta">' +
             '<span class="plugin-name">' + esc(p.name) + '</span>' +
+            externalBadge +
           '</div>' +
         '</div>' +
       '</div>' +
@@ -98,7 +125,9 @@ function createOfficialCard(p) {
       '<div class="card-row">' +
         '<div class="plugin-actions">' +
           '<button class="btn btn-outline">打开</button>' +
-          '<button class="btn btn-outline btn-export-to-local" data-name="' + escAttr(p.name) + '">导出到本地</button>' +
+          '<button class="btn btn-outline btn-export-to-local" data-name="' + escAttr(p.name) + '" data-folder="' + escAttr(p.folder) + '">导出到本地</button>' +
+          folderBtn +
+          menuToggleHTML(p.name, p.menuShown) +
         '</div>' +
       '</div>' +
     '</div>';
@@ -176,6 +205,7 @@ function createMyCreatedCard(p) {
           btnRestore +
           btnPublish +
           btnDelete +
+          menuToggleHTML(p.name, p.menuShown) +
         '</div>' +
       '</div>' +
     '</div>';
@@ -213,6 +243,7 @@ function createAcquiredCard(p) {
       '<div class="card-row">' +
         '<div class="plugin-actions">' +
           btnDownload + btnOpen + btnUpdate + btnDetail + btnFolder +
+          menuToggleHTML(p.name, p.menuShown) +
         '</div>' +
       '</div>' +
     '</div>';
@@ -238,6 +269,7 @@ function createLocalCard(p) {
           '<button class="btn btn-ghost btn-rename" data-name="' + escAttr(p.name) + '">重命名</button>' +
           '<button class="btn btn-danger btn-delete-plugin" data-name="' + escAttr(p.name) + '" data-type="local">删除</button>' +
           '<button class="btn btn-ghost btn-open-folder" data-name="' + escAttr(p.name) + '">打开文件夹</button>' +
+          menuToggleHTML(p.name, p.menuShown) +
         '</div>' +
       '</div>' +
     '</div>';
@@ -247,9 +279,12 @@ function createLocalCard(p) {
 // RENDER FUNCTIONS
 // =============================================================
 function renderOfficial() {
+  var list = officialView === 'publish'
+    ? officialPlugins.filter(function(p) { return p.external; })
+    : officialPlugins;
   var html = '';
-  officialPlugins.forEach(function(p) { html += createOfficialCard(p); });
-  document.getElementById('tab-official').innerHTML = html;
+  list.forEach(function(p) { html += createOfficialCard(p, officialView); });
+  document.getElementById('officialList').innerHTML = html;
 }
 
 function renderMyCreated() {
@@ -283,6 +318,82 @@ function renderLocal() {
     list.appendChild(div);
   });
 }
+
+// =============================================================
+// 菜单栏显示 开关 + 【插件】菜单下拉
+// =============================================================
+function renderPluginDropdown() {
+  var pinned = [];
+  [officialPlugins, myCreatedPlugins, myAcquiredPlugins, localPlugins].forEach(function(list) {
+    list.forEach(function(p) {
+      if (p.menuShown) pinned.push(p);
+    });
+  });
+  pinned.sort(function(a, b) { return (a.menuShownAt || 0) - (b.menuShownAt || 0); });
+
+  var target = document.getElementById('dropdownPinnedList');
+  if (pinned.length === 0) {
+    target.innerHTML = '<div class="dropdown-empty-hint">暂无快捷入口（在【插件管理】卡片上开启「菜单栏显示」）</div>';
+  } else {
+    target.innerHTML = pinned.map(function(p) {
+      return '<div class="dropdown-item" title="点击打开插件">' + esc(p.name) + '</div>';
+    }).join('');
+  }
+}
+
+// 全局：切换插件的 menuShown 状态
+document.addEventListener('click', function(e) {
+  var toggle = e.target.closest('.menu-toggle');
+  if (!toggle) return;
+  var name = toggle.dataset.pluginName;
+  var found = null;
+  [officialPlugins, myCreatedPlugins, myAcquiredPlugins, localPlugins].forEach(function(list) {
+    list.forEach(function(p) {
+      if (p.name === name) found = p;
+    });
+  });
+  if (!found) return;
+  found.menuShown = !found.menuShown;
+  if (found.menuShown) {
+    menuShownCounter++;
+    found.menuShownAt = menuShownCounter;
+  }
+  // 重新渲染当前 tab 的卡片 + dropdown
+  renderOfficial();
+  renderMyCreated();
+  renderMyAcquired();
+  renderLocal();
+  renderPluginDropdown();
+});
+
+// 【插件】菜单按钮：切换下拉
+document.getElementById('pluginMenuBtn').addEventListener('click', function(e) {
+  e.stopPropagation();
+  var dd = document.getElementById('pluginDropdown');
+  var isOpen = !dd.classList.contains('hidden');
+  if (isOpen) {
+    dd.classList.add('hidden');
+    this.classList.remove('open');
+  } else {
+    dd.classList.remove('hidden');
+    this.classList.add('open');
+  }
+});
+
+// 下拉外部点击关闭；下拉项点击后关闭（模拟打开插件）
+document.addEventListener('click', function(e) {
+  var toolbar = document.getElementById('editorToolbar');
+  if (toolbar && !toolbar.contains(e.target)) {
+    document.getElementById('pluginDropdown').classList.add('hidden');
+    document.getElementById('pluginMenuBtn').classList.remove('open');
+    return;
+  }
+  var item = e.target.closest('.dropdown-item');
+  if (item) {
+    document.getElementById('pluginDropdown').classList.add('hidden');
+    document.getElementById('pluginMenuBtn').classList.remove('open');
+  }
+});
 
 // =============================================================
 // UTILS
@@ -874,7 +985,7 @@ var exportTarget = null;
 document.addEventListener('click', function(e) {
   var btn = e.target.closest('.btn-export-to-local');
   if (!btn) return;
-  exportTarget = { name: btn.dataset.name };
+  exportTarget = { name: btn.dataset.name, folder: btn.dataset.folder };
   document.getElementById('exportPluginName').textContent = exportTarget.name;
   openModal('modalExportToLocal');
 });
@@ -908,6 +1019,18 @@ document.getElementById('btnConfirmExportToLocal').addEventListener('click', fun
   target.classList.add('active');
   void target.offsetWidth;
   target.classList.add('fade-in');
+});
+
+// =============================================================
+// 官方 tab 视角切换（内网 / publish，仅原型演示）
+// =============================================================
+document.getElementById('officialViewToggle').addEventListener('click', function(e) {
+  var btn = e.target.closest('.view-toggle-btn');
+  if (!btn) return;
+  document.querySelectorAll('#officialViewToggle .view-toggle-btn').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  officialView = btn.dataset.view;
+  renderOfficial();
 });
 document.getElementById('btnImportPlugin').addEventListener('click', function() {
   localIdCounter++;

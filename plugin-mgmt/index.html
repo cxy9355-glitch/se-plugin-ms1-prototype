@@ -8,6 +8,20 @@
 </head>
 <body>
 
+<!-- 模拟编辑器顶部工具栏（用来演示【插件】菜单下拉） -->
+<div class="editor-toolbar" id="editorToolbar">
+  <span class="toolbar-hint">模拟编辑器工具栏 →</span>
+  <button class="editor-menu-btn" id="pluginMenuBtn">插件 ▾</button>
+  <div class="plugin-dropdown hidden" id="pluginDropdown">
+    <div class="dropdown-item" data-action="manage">插件管理</div>
+    <div class="dropdown-item" data-action="tutorial">插件教程</div>
+    <div class="dropdown-divider"></div>
+    <div id="dropdownPinnedList">
+      <div class="dropdown-empty-hint">暂无快捷入口（可在【插件管理】卡片上开启「菜单栏显示」）</div>
+    </div>
+  </div>
+</div>
+
 <div class="plugin-dialog" id="mainDialog">
   <div class="title-bar">
     <span class="title">&#x1F6E0; 编辑器插件</span>
@@ -36,7 +50,14 @@
         <div class="empty-state" id="localEmpty" style="display:none;">暂无本地插件，点击上方按钮新建或导入</div>
         <div id="localList"></div>
       </div>
-      <div class="tab-content" id="tab-official"></div>
+      <div class="tab-content" id="tab-official">
+        <div class="view-toggle" id="officialViewToggle">
+          <button class="view-toggle-btn active" data-view="internal">非 publish 版</button>
+          <button class="view-toggle-btn" data-view="publish">publish 版</button>
+          <span class="view-toggle-hint">切换预览《插件外放配置表》过滤效果</span>
+        </div>
+        <div id="officialList"></div>
+      </div>
     </div>
   </div>
 </div>
